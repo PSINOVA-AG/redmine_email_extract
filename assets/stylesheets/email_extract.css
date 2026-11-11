@@ -1,0 +1,376 @@
+/*
+ * redmine_email_extract - controls added to Redmine's upload form (see email_extract.js).
+ *
+ * Everything lives inside ".attachments_fields" and is prefixed "email-extract-".
+ * The controls use Redmine's own means wherever they fit: icons from its SVG sprite,
+ * its icon classes (.icon, .icon-only, .icon-label), plain <button>s as application.css
+ * styles them, and the Open Color variables (--oc-*, open-color.css) that
+ * application.css uses for the same kind of element. Every variable has the Open Color
+ * value as a fallback, for a theme that does not load open-color.css. This file only
+ * adds layout and what Redmine does not cover.
+ *
+ * The upload form can sit inside Redmine's ".tabular" boxes, whose rules for labels,
+ * inputs and paragraphs are broad; elements here therefore avoid <label> and reset
+ * the properties those rules set.
+ *
+ * Specificity: below 900px responsive.css applies ".attachments_fields span"
+ * (specificity 0,1,1) to every <span> in an upload row, i.e. also to the ones in the
+ * controls below. Rules for those spans are therefore written with the prefix
+ * ".attachments_fields" (and, where a state is set explicitly, with the container
+ * class as well), so that they win at every width without !important. Redmine's own
+ * spans in the row are not touched: all rules start at one of the plugin's elements.
+ */
+.attachments_fields {
+  --email-extract-indent: 20px; /* width of the file icon in front of the file name */
+  --email-extract-touch: 40px; /* minimum hit area on touch screens */
+}
+
+/* What ".attachments_fields span" of responsive.css sets on the plugin's spans, undone:
+   "position: relative" (would take the tag out of the corner of its tile),
+   "margin-block-end: 1em" (would push the parts of the status line and the tile
+   apart), "clear: both", and "white-space: normal" (the nowrap of the buttons and the
+   chip would be lost; the spans take it from their parent again). */
+.attachments_fields .email-extract-chip span,
+.attachments_fields .email-extract-status span,
+.attachments_fields .email-extract-picker span {
+  position: static;
+  clear: none;
+  margin-block-end: 0;
+  white-space: inherit;
+}
+
+/* --- Chip next to an uploaded e-mail ---------------------------------------- */
+/* An icon link like the trash icon of the row ("a.icon": link colour, blue icon that
+   turns red on hover), but with a text, so it reads as an action of its own. */
+.attachments_fields .email-extract-chip {
+  max-inline-size: 100%;
+  margin-inline: 8px 16px; /* keeps it clear of the trash icon */
+  white-space: nowrap;
+}
+
+/* Redmine sets "display" inline on the links of an upload row (attachments.js), and an
+   inline style cannot be beaten by a selector, so !important is needed here. */
+.attachments_fields .email-extract-chip[hidden] {
+  display: none !important;
+}
+
+.email-extract-chip.email-extract-busy {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* --- Status line: message, stepper ("2 of 8 messages", All), quote, undo ---- */
+.email-extract-status {
+  display: flex;
+  white-space: normal; /* Redmine sets nowrap on ".attachments_fields > span" */
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 6px 0;
+  margin-inline: var(--email-extract-indent) 0;
+}
+
+/* Coloured like Redmine's success message (div.flash.notice), but small. It may wrap
+   on a narrow screen. */
+.email-extract-message {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  padding: 3px 8px;
+  border: 1px solid var(--oc-green-3, #8ce99a);
+  border-radius: 3px;
+  background-color: var(--oc-green-1, #d3f9d8);
+  color: var(--oc-green-9, #2b8a3e);
+  overflow-wrap: anywhere;
+}
+
+.email-extract-message .icon-svg {
+  stroke: var(--oc-green-9, #2b8a3e);
+}
+
+/* Redmine styles every <button> (border, padding, radius), but gives only submit
+   buttons a pointer and a hover colour; these are type="button", so they get the
+   same here. */
+.email-extract-button {
+  margin: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 100ms linear;
+}
+
+.email-extract-button:hover:not(:disabled) {
+  background-color: var(--oc-gray-2, #e9ecef);
+}
+
+/* Like Redmine's disabled inputs. */
+.email-extract-button:disabled {
+  cursor: not-allowed;
+  color: graytext;
+  background-color: var(--oc-gray-2, #e9ecef);
+}
+
+.email-extract-button:disabled .icon-svg {
+  stroke: var(--oc-gray-5, #adb5bd);
+}
+
+/* A toggle button that is on ("As quote", aria-pressed="true"): the blue of the
+   selected tiles in the file picker, so "on" looks the same everywhere here. Colour
+   alone does not tell, so the button also looks pressed in: a second border line
+   (inset shadow, adds no width) and a shadow at the top. Neither shifts the layout. */
+.email-extract-button[aria-pressed="true"] {
+  border-color: var(--oc-blue-7, #1c7ed6);
+  background-color: var(--oc-blue-0, #e7f5ff);
+  box-shadow: inset 0 0 0 1px var(--oc-blue-7, #1c7ed6), inset 0 2px 4px rgba(0, 0, 0, 0.18);
+}
+
+.email-extract-button[aria-pressed="true"]:hover:not(:disabled) {
+  background-color: var(--oc-blue-1, #d0ebff);
+}
+
+.email-extract-button[aria-pressed="true"] .icon-svg-filled {
+  fill: var(--oc-blue-7, #1c7ed6);
+}
+
+/* "[-] 2 of 8 messages [+]": the two buttons and the count form one control, which
+   never breaks apart (the status line wraps before it). */
+.email-extract-stepper {
+  display: inline-flex;
+  flex: none;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+.email-extract-stepper .email-extract-step {
+  padding-inline: 4px;
+}
+
+.email-extract-stepper .email-extract-step:first-child {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.email-extract-stepper .email-extract-step:last-child {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+.attachments_fields .email-extract-stepper .email-extract-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border: solid var(--oc-gray-4, #ced4da); /* the border of the buttons */
+  border-width: 1px 0;
+  background-color: var(--oc-white, #ffffff);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- File picker: a box like Redmine's ".box" -------------------------------- */
+.email-extract-picker {
+  max-inline-size: 760px;
+  margin-block: 8px 10px;
+  margin-inline: var(--email-extract-indent) 0;
+  padding: 10px;
+  border: 1px solid var(--oc-gray-2, #e9ecef);
+  border-radius: 3px;
+  background-color: var(--oc-gray-0, #f8f9fa);
+  text-align: start;
+  white-space: normal; /* Redmine sets nowrap on ".attachments_fields > span" */
+}
+
+.email-extract-picker-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-block-end: 8px;
+}
+
+/* Like Redmine's explanations (em.info). */
+.email-extract-hint {
+  color: var(--oc-gray-6, #868e96);
+  font-size: 90%;
+}
+
+/* A mail can hold very many images: the grid scrolls inside the form instead of
+   making the form endless. The tiles show their focus ring inside themselves (see
+   below), so the scrolling box does not clip it. */
+.email-extract-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(116px, 100%), 1fr));
+  gap: 8px;
+  max-block-size: min(50vh, 420px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.email-extract-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-inline-size: 0; /* a long file name must not widen the grid column */
+  padding: 6px;
+  border: 1px solid var(--oc-gray-4, #ced4da);
+  border-radius: 3px;
+  background-color: var(--oc-white, #ffffff);
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Selected: the blue Redmine uses for highlighted entries of its drop-down menus.
+   (:has() is supported by every browser Redmine 7 supports, so there is no fallback.) */
+.email-extract-tile:has(input:checked) {
+  border-color: var(--oc-blue-7, #1c7ed6);
+  background-color: var(--oc-blue-0, #e7f5ff);
+}
+
+/* Keyboard focus is on the checkbox; the tile shows it as a whole, inside its own box
+   so that the scrolling grid cannot cut it off. */
+.email-extract-tile:has(input:focus-visible) {
+  outline: 2px solid var(--oc-blue-7, #1c7ed6);
+  outline-offset: -2px;
+}
+
+.email-extract-tile input {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-start: 4px;
+  margin: 0;
+}
+
+.attachments_fields .email-extract-picker .email-extract-tag {
+  position: absolute; /* responsive.css makes spans "relative" */
+  inset-block-start: 4px;
+  inset-inline-end: 4px;
+  max-inline-size: calc(100% - 30px); /* leaves room for the checkbox */
+  overflow: hidden;
+  padding: 0 4px;
+  border-radius: 3px;
+  background-color: var(--oc-gray-2, #e9ecef);
+  color: var(--oc-gray-7, #495057);
+  font-size: 0.75em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.email-extract-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  block-size: 64px;
+  margin-block-start: 14px; /* below checkbox and tag */
+}
+
+.email-extract-preview img {
+  max-inline-size: 100%;
+  max-block-size: 64px;
+  object-fit: contain;
+}
+
+/* The file icon stands in for a thumbnail; the sprite has no size this large. */
+.email-extract-preview .icon-svg {
+  inline-size: 32px;
+  block-size: 32px;
+  stroke: var(--oc-gray-6, #868e96);
+}
+
+.attachments_fields .email-extract-picker .email-extract-filename {
+  max-inline-size: 100%;
+  overflow: hidden;
+  font-size: 0.85em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.email-extract-size {
+  color: var(--oc-gray-6, #868e96);
+  font-size: 0.8em;
+}
+
+.email-extract-picker-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block-start: 10px;
+}
+
+/* --- Narrow screens ------------------------------------------------------------ */
+/* Below 900px responsive.css moves the trash icon into the top right corner of the row
+   and gives the description field the full width, so the chip lands on its own line.
+   Phones get no indent for the status line and the picker (they need the width), and
+   the chip may wrap instead of overflowing. */
+@media screen and (max-width: 899px) {
+  .attachments_fields .email-extract-chip {
+    margin-block-start: 6px;
+    margin-inline: 0;
+  }
+}
+
+@media screen and (max-width: 599px) {
+  .attachments_fields {
+    --email-extract-indent: 0px;
+  }
+
+  .attachments_fields .email-extract-chip {
+    white-space: normal;
+  }
+
+  .email-extract-picker {
+    padding: 8px;
+  }
+}
+
+/* --- Touch screens ------------------------------------------------------------- */
+/* Fingers need bigger targets than a mouse: about 40px high buttons, a wider step
+   button, a larger checkbox and a skip link with a padded hit area. The tile itself
+   is clickable as a whole. */
+@media (pointer: coarse) {
+  .attachments_fields {
+    --email-extract-indent: 0px;
+  }
+
+  .attachments_fields .email-extract-chip,
+  .email-extract-button,
+  .email-extract-skip {
+    min-block-size: var(--email-extract-touch);
+  }
+
+  .attachments_fields .email-extract-chip {
+    padding-inline: 4px;
+  }
+
+  .email-extract-stepper .email-extract-step {
+    min-inline-size: var(--email-extract-touch);
+    justify-content: center;
+  }
+
+  .email-extract-skip {
+    display: inline-flex;
+    align-items: center;
+    padding-inline: 8px;
+  }
+
+  .email-extract-tile input {
+    inline-size: 22px;
+    block-size: 22px;
+  }
+
+  .attachments_fields .email-extract-picker .email-extract-tag {
+    max-inline-size: calc(100% - 38px);
+  }
+
+  .email-extract-preview {
+    margin-block-start: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .email-extract-button {
+    transition: none;
+  }
+}

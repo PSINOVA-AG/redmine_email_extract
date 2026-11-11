@@ -1,0 +1,51 @@
+de:
+  # Kopfzeilen der eingefügten E-Mail
+  email_extract_from: "Von"
+  email_extract_to: "An"
+  email_extract_cc: "Cc"
+  email_extract_date: "Datum"
+  email_extract_subject: "Betreff"
+
+  # Fehlermeldungen des Servers
+  email_extract_failed: "Die E-Mail konnte nicht gelesen werden."
+  email_extract_not_found: "Hochgeladene Datei nicht gefunden."
+
+  # Texte für email_extract.js (werden als Ganzes an die Seite übergeben).
+  # Einträge mit one/other werden nach der Anzahl %{count} gewählt.
+  email_extract_js:
+    insert: "E-Mail-Text einfügen"
+    insert_notes: "In Notiz einfügen"
+    insert_description: "In Beschreibung einfügen"
+    inserted: "Eingefügt"
+    attached:
+      one: "Eingefügt, %{count} Datei angehängt"
+      other: "Eingefügt, %{count} Dateien angehängt"
+    messages_shown: "%{count} von %{total} Nachrichten"
+    messages_more: "Eine ältere Nachricht mehr einfügen"
+    messages_fewer: "Eine Nachricht weniger einfügen"
+    messages_all: "Alle"
+    as_quote: "Als Zitat"
+    as_quote_tooltip: "Die ganze E-Mail als Zitat einfügen (Kopfzeilen und neueste Nachricht mit >, ältere tiefer). Vorausgewählt, wenn die E-Mail nicht von Ihnen stammt."
+    undo: "Rückgängig"
+    parts_title:
+      one: "%{count} Datei in der E-Mail"
+      other: "%{count} Dateien in der E-Mail"
+    parts_hint_small: "Kleine Bilder (z. B. Signatur-Logos) sind abgewählt."
+    parts_hint_older: "Bilder aus nicht eingefügten Nachrichten sind abgewählt."
+    older_tag: "ältere Nachricht"
+    attach_selected: "Ausgewählte anhängen (%{count})"
+    attaching: "Wird angehängt…"
+    skip: "Überspringen"
+    error_uploading: "Die E-Mail wird noch hochgeladen, bitte gleich noch einmal versuchen."
+    error_failed: "Die E-Mail konnte nicht gelesen werden."
+    error_session: "Ihre Sitzung ist abgelaufen. Bitte laden Sie die Seite neu und melden Sie sich erneut an."
+    error_network: "Der Server ist nicht erreichbar. Bitte prüfen Sie die Verbindung und versuchen Sie es erneut."
+    error_no_text: "Die E-Mail enthält keinen Text."
+    error_no_field: "Kein Textfeld zum Einfügen gefunden."
+    error_none_selected: "Keine Datei ausgewählt."
+    error_too_many:
+      one: "In dieses Formular passt nur noch %{count} Datei. Bitte weniger Dateien auswählen."
+      other: "In dieses Formular passen nur noch %{count} Dateien. Bitte weniger Dateien auswählen."
+    error_form_full: "In dieses Formular passen keine weiteren Dateien."
+    error_undo: "Der eingefügte Text wurde inzwischen geändert und kann nicht automatisch entfernt werden."
+    error_switch: "Der eingefügte Text wurde inzwischen geändert und lässt sich nicht mehr umstellen (Anzahl der Nachrichten, Zitieren)."

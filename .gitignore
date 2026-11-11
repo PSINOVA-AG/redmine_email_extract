@@ -1,0 +1,17 @@
+# Redmine merges the plugin Gemfile into its own bundle; a lock file here is not used.
+Gemfile.lock
+.bundle/
+*.gem
+
+# Editors and OS files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local output
+coverage/
+log/
+tmp/
+*.log

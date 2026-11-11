@@ -1,0 +1,51 @@
+en:
+  # Header lines of the inserted e-mail
+  email_extract_from: "From"
+  email_extract_to: "To"
+  email_extract_cc: "Cc"
+  email_extract_date: "Date"
+  email_extract_subject: "Subject"
+
+  # Error messages of the server
+  email_extract_failed: "The e-mail could not be read."
+  email_extract_not_found: "Uploaded file not found."
+
+  # Texts for email_extract.js (passed to the page as a whole).
+  # Entries with one/other are chosen by the number %{count}.
+  email_extract_js:
+    insert: "Insert e-mail text"
+    insert_notes: "Insert into notes"
+    insert_description: "Insert into description"
+    inserted: "Inserted"
+    attached:
+      one: "Inserted, %{count} file attached"
+      other: "Inserted, %{count} files attached"
+    messages_shown: "%{count} of %{total} messages"
+    messages_more: "Insert one more older message"
+    messages_fewer: "Insert one message less"
+    messages_all: "All"
+    as_quote: "As quote"
+    as_quote_tooltip: "Insert the whole e-mail as a quote (header lines and newest message with >, older ones deeper). Preselected unless you sent the e-mail yourself."
+    undo: "Undo"
+    parts_title:
+      one: "%{count} file in the e-mail"
+      other: "%{count} files in the e-mail"
+    parts_hint_small: "Small images (e.g. signature logos) are deselected."
+    parts_hint_older: "Images from messages that are not inserted are deselected."
+    older_tag: "older message"
+    attach_selected: "Attach selected (%{count})"
+    attaching: "Attaching…"
+    skip: "Skip"
+    error_uploading: "The e-mail is still uploading, please try again in a moment."
+    error_failed: "The e-mail could not be read."
+    error_session: "Your session has expired. Please reload the page and sign in again."
+    error_network: "The server could not be reached. Please check your connection and try again."
+    error_no_text: "The e-mail contains no text."
+    error_no_field: "No text field found to insert into."
+    error_none_selected: "No file selected."
+    error_too_many:
+      one: "Only %{count} more file fits into this form. Please select fewer files."
+      other: "Only %{count} more files fit into this form. Please select fewer files."
+    error_form_full: "No more files fit into this form."
+    error_undo: "The inserted text has been edited since and can't be removed automatically."
+    error_switch: "The inserted text has been edited since and can no longer be changed (number of messages, quoting)."

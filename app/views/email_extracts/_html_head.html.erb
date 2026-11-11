@@ -1,0 +1,12 @@
+<%# Configuration for email_extract.js: endpoint URLs and the texts of the current language. %>
+<% if User.current.logged? %>
+  <%
+    config = {
+      urls: { extract: email_extract_path, attach: email_extract_attach_path },
+      labels: t(:email_extract_js)
+    }
+  %>
+  <%= tag.meta name: 'email-extract-config', content: config.to_json %>
+  <%= stylesheet_link_tag 'email_extract', plugin: RedmineEmailExtract::PLUGIN_ID %>
+  <%= javascript_include_tag 'email_extract', plugin: RedmineEmailExtract::PLUGIN_ID, defer: true %>
+<% end %>

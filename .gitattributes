@@ -1,0 +1,9 @@
+# The plugin runs on Linux: keep LF line endings in the repository and in checkouts,
+# also on Windows.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.msg binary
+*.eml -text
