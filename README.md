@@ -27,14 +27,59 @@ When an e-mail file is uploaded in an upload form, an **"In Notiz einfügen" /
   case). A mail from someone else is a quote as a whole; in a mail the user sent, the
   newest message is their own words. The text is updated at once when it is switched.
   Images in a message are quoted along with it,
-- fills the subject of a new issue if it is still empty,
+- fills issue fields from the mail if they are still empty: by default the subject of
+  the issue with the subject of the mail; which attributes fill which fields is set in
+  the plugin settings (see "Issue fields from the mail"),
 - offers the **images and files of the mail** in a picker. Chosen files become normal
   attachments of the form; images are also shown in the inserted text, at the place
   they have in the mail.
   Small images (logos) and images of messages that are not inserted are not pre-selected,
-- can be undone for a short time (text, subject and attached files).
+- can be undone for a short time (text, filled fields and attached files).
 
 Files that are already attached to an issue do not get the chip.
+
+## Issue fields from the mail
+
+In Administration > Plugins > E-mail Extract > Configure an administrator chooses for
+each attribute of a mail which field of the issue form it fills, or "(not mapped)":
+
+| Attribute | Value | Fields it can fill |
+|---|---|---|
+| Subject, From (name and address), Sender name, Sender address, To, Cc | text, as in the header lines; the sender address lowercased | text fields: Subject; custom fields of the formats Text and Long text |
+| Date sent | the day the mail was sent | date fields: Start date, Due date; custom fields of the format Date |
+
+Each select lists the standard and custom fields of the type of its attribute only:
+text goes into text fields, the date into date fields, and the value is converted to
+what the field holds. Redmine has no field of a time type, so the time of day at which
+a mail was sent cannot be mapped (it is in the Date line of the inserted text). Not
+offered either: the description (the mail itself is inserted there) and the other
+custom field formats (lists, users, numbers, links, yes/no, fields with multiple values).
+The default is Subject -> Subject, everything else not mapped; it fills the subject
+exactly as before 1.3.0, and can be set to "(not mapped)" too.
+
+When a mail is inserted (in the new-issue and the edit form alike), each mapped
+attribute that the mail has fills its field if that field is in the form and empty;
+what the user entered is never replaced. Fields that are not in the form (a custom
+field not enabled for the tracker or project, a field read-only by the workflow) are
+left out without a message. Undo empties the fields again unless they were edited.
+
+- Values are plain text of one line: line breaks and control characters become a space,
+  bidirectional formatting characters are removed (as in the header lines, but without
+  the escapes of the text formatting). They are cut to 255 characters for the subject
+  and to the maximum length of a custom field, if it has one.
+- The date is the day in the current user's time zone, as in the Date line. It is the
+  `Date:` header of an `.eml` file, and the time Outlook sent a `.msg` file (or, if
+  that is missing, the time it was delivered).
+- With "Use current date as start date for new issues" (Administration > Settings >
+  Issue tracking), Redmine fills the start date of a new issue with today's date when
+  the form opens. The field is then not empty, so "Date sent" -> Start date does not
+  fill it on new issues; this is deliberate, as a filled field is never replaced. Map
+  the date to the due date or a date custom field to have it on new issues.
+- If two attributes are mapped to the same field, the first one in the order of the
+  settings page fills it and the other one is ignored; the settings page says so.
+  (Redmine's plugin settings cannot reject a value when they are saved.)
+- A mapping to a custom field that has been deleted is ignored and shown as not mapped;
+  it is removed when the settings are saved next time.
 
 ## Text formattings
 
@@ -86,9 +131,10 @@ git clone https://github.com/PSINOVA-AG/redmine_email_extract.git plugins/redmin
 bundle install
 ```
 
-There are no database migrations and no plugin settings. To update, run `git pull` in
-the plugin folder, `bundle install`, and restart Redmine. To remove the plugin, delete
-the folder and restart.
+There are no database migrations. The plugin settings (see "Issue fields from the
+mail") work without being saved once. To update, run `git pull` in the plugin folder,
+`bundle install`, and restart Redmine. To remove the plugin, delete the folder and
+restart.
 
 With the `sameersbn/redmine` image, mount the folder to
 `/home/redmine/data/plugins/redmine_email_extract` (writable: the image changes the
@@ -115,6 +161,7 @@ Operations notes:
 ```
 app/controllers/email_extracts_controller.rb   JSON endpoints used by the script
 app/views/email_extracts/_html_head.html.erb   loads script, styles and texts on every page
+app/views/settings/_email_extract_settings.html.erb   plugin settings (issue fields from the mail)
 assets/javascripts/email_extract.js            chip, status line, file picker
 assets/stylesheets/email_extract.css
 lib/redmine_email_extract/
@@ -130,6 +177,7 @@ lib/redmine_email_extract/
   plain_markup.rb, textile_markup.rb, common_mark_markup.rb
   part_list.rb         order and pre-selection of the picker
   extraction.rb        header, messages and files of a mail, as sent to the page
+  field_mapping.rb     which mail attribute fills which issue field; their values
   part_uploader.rb     stores chosen files as Redmine uploads
   hooks.rb             view hook
 ```
@@ -145,14 +193,18 @@ there. In such a setup:
 
 ```
 bundle exec rake redmine:plugins:test:units NAME=redmine_email_extract RAILS_ENV=test
+bundle exec rake redmine:plugins:test:functionals NAME=redmine_email_extract RAILS_ENV=test
 ```
 
 The unit tests cover thread splitting, image placement, formatting, the picker list,
-the HTML recovery from RTF, the limits on files and the `.eml` reader, with mails built
-in the tests.
+the HTML recovery from RTF, the limits on files, the field mapping and the `.eml`
+reader, with mails built in the tests.
 The `.msg` reader is tested with files built in the tests with ruby-ole (there is no real
 `.msg` fixture: Outlook files contain customer data). The uploader test needs Redmine's
-user fixtures. There is no controller test and no JavaScript test.
+user fixtures. The functional test of the controller covers the answer of
+`POST /email_extract` (the filled fields with the default and a custom mapping, and
+`sent_by_me`) for an `.eml` upload made in the test; it needs Redmine's user and e-mail
+address fixtures. There is no JavaScript test.
 
 ## Known limits
 
@@ -204,6 +256,22 @@ RTF in the `ruby-msg` gem (`Mapi::RTF.rtf2html`), which is under the MIT licence
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Changelog
+
+### 1.3.0
+
+- Plugin settings: which attributes of a mail (subject, sender, sender name and
+  address, To, Cc, date sent) fill which issue fields of the same type (text: subject
+  and text custom fields; date: start date, due date and date custom fields). The
+  default fills the subject as before. Fields are filled only if they are in the
+  form and empty, in the new-issue and the edit form.
+- Undo also empties the fields that were filled, unless they were edited since.
+- The subject that fills the issue subject is plain text of one line: line breaks
+  and control characters become a space, bidirectional formatting characters are
+  removed.
+- The answer of `POST /email_extract` has `fields` (the mapped fields and their
+  values) instead of `subject`.
+- Sender name of a mail (`from_name`) in both readers.
+- Unit tests of the field mapping; controller test.
 
 ### 1.2.0
 

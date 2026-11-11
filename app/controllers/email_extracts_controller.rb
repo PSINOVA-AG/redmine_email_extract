@@ -16,6 +16,9 @@ class EmailExtractsController < ApplicationController
   before_action :require_login
   before_action :find_uploaded_mail
 
+  # fields:   values of the mail for the issue fields the plugin settings map them to,
+  #           [{ target:, value: }] (see FieldMapping#fills); the page fills the
+  #           empty ones of these fields that its form has
   # header:   the From / To / ... block as wiki text
   # messages: the messages of the thread, the newest first (one if no thread). Each is
   #           a list of pieces: wiki text, or the index of an image shown at that place.
@@ -24,10 +27,12 @@ class EmailExtractsController < ApplicationController
   # sent_by_me: the current user sent the mail; the page then does not insert it as a
   #           quote at first (see #sent_by_current_user?)
   def create
+    # Settings and custom fields come from the database: read before the time limit.
+    mapping = RedmineEmailExtract::FieldMapping.current
     result = read_mail do |mail|
       extraction = RedmineEmailExtract::Extraction.new(mail)
       {
-        subject: mail.subject.to_s.truncate(255),
+        fields: mapping.fills(mail),
         header: extraction.header,
         messages: extraction.messages,
         entries: extraction.entries, # their data is read: PartList compares it
@@ -37,7 +42,7 @@ class EmailExtractsController < ApplicationController
     return if performed?
 
     render json: {
-      subject: result[:subject],
+      fields: result[:fields],
       header: result[:header],
       messages: result[:messages],
       parts: result[:entries].map { |entry| entry_json(entry) },
@@ -103,9 +108,10 @@ class EmailExtractsController < ApplicationController
   #
   # Only the reading is inside the limit: Timeout interrupts the code at any point,
   # which must not be a database query or the response. So the file is opened and
-  # closed outside of it, what the readers and the formatter look up in the database
-  # (settings, the time zone of the user for the Date line) is read before it, and
-  # the caller renders after it.
+  # closed outside of it, what the readers, the formatter and FieldMapping#fills look
+  # up in the database (settings, the time zone of the user for the Date line and the
+  # mapped dates) is read before it, and the caller renders after it. (The field
+  # mapping itself, with its settings and custom fields, is read by the caller.)
   #
   # Rescued: StandardError includes Timeout::Error (the timeout itself is raised as
   # Timeout::ExitException, which the code inside cannot rescue, and turned into

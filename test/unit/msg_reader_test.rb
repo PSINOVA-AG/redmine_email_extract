@@ -157,6 +157,25 @@ class MsgReaderTest < ActiveSupport::TestCase
     end
   end
 
+  test 'from_name is the name of the sender only' do
+    read(plain_msg.to_s) { |mail| assert_equal 'Anna Example', mail.from_name }
+
+    # Without an SMTP address the name is all there is (and From shows it).
+    read(MsgBuilder.new.string(0x0c1a, 'Anna Example').string(0x0c1f, '/O=EXCHANGELABS/CN=ANNA').to_s) do |mail|
+      assert_equal 'Anna Example', mail.from_name
+      assert_equal 'Anna Example', mail.from
+    end
+  end
+
+  test 'from_name is nil if the mail has only an address' do
+    # Outlook gives the address as the name when it knows no name.
+    read(MsgBuilder.new.string(0x0c1a, 'Anna@Example.org').string(0x0c1f, 'anna@example.org').to_s) do |mail|
+      assert_nil mail.from_name
+      assert_equal 'anna@example.org', mail.from_address
+    end
+    read(MsgBuilder.new.string(0x0c1f, 'anna@example.org').to_s) { |mail| assert_nil mail.from_name }
+  end
+
   test 'reads the contained files without embedded messages and empty files' do
     read(msg_with_files.to_s) do |mail|
       assert_equal %w[image001.png offer.pdf notes.txt], mail.parts.map(&:filename)

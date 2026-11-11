@@ -6,6 +6,20 @@ en:
   email_extract_date: "Date"
   email_extract_subject: "Subject"
 
+  # Plugin settings: attributes of the e-mail that can fill issue fields
+  email_extract_settings_field_mapping: "Fill issue fields from the e-mail"
+  email_extract_settings_field_mapping_hint: "When an e-mail is inserted into an issue, each value chosen here goes into its field if the field is in the form and still empty. Each value is offered the fields of its type only: text goes into text fields, the date into date fields. Text is inserted as plain text on one line and shortened to the length the field allows."
+  email_extract_settings_date_hint: "The day the e-mail was sent, in the time zone of the user who inserts it."
+  email_extract_settings_duplicate: "%{attribute}: this field is already filled by %{first}, so this choice is ignored."
+  email_extract_not_mapped: "(not mapped)"
+  email_extract_attribute_subject: "Subject"
+  email_extract_attribute_from: "From (name and address)"
+  email_extract_attribute_from_name: "Sender name"
+  email_extract_attribute_from_address: "Sender address"
+  email_extract_attribute_to: "To"
+  email_extract_attribute_cc: "Cc"
+  email_extract_attribute_date: "Date sent"
+
   # Error messages of the server
   email_extract_failed: "The e-mail could not be read."
   email_extract_not_found: "Uploaded file not found."

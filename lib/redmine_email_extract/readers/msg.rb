@@ -63,6 +63,9 @@ module RedmineEmailExtract
         format_address(clean(props.sender_name), read_from_address)
       end
 
+      # The name read_from shows (a mail without an SMTP address has only this).
+      def read_from_name = props.sender_name
+
       def read_from_address
         # The sender first; the one it was sent for ("on behalf of") is the same
         # person in all but delegated mails.

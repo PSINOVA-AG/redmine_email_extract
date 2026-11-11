@@ -6,6 +6,20 @@ de:
   email_extract_date: "Datum"
   email_extract_subject: "Betreff"
 
+  # Plugin-Einstellungen: Angaben der E-Mail, die Ticketfelder füllen können
+  email_extract_settings_field_mapping: "Ticketfelder aus der E-Mail füllen"
+  email_extract_settings_field_mapping_hint: "Wird eine E-Mail in ein Ticket eingefügt, kommt jeder hier gewählte Wert in sein Feld, wenn das Feld im Formular ist und noch leer ist. Zu jedem Wert werden nur die Felder seines Typs angeboten: Text kommt in Textfelder, das Datum in Datumsfelder. Text wird als einzeiliger reiner Text eingefügt und auf die Länge gekürzt, die das Feld zulässt."
+  email_extract_settings_date_hint: "Der Tag, an dem die E-Mail gesendet wurde, in der Zeitzone des Benutzers, der sie einfügt."
+  email_extract_settings_duplicate: "%{attribute}: Dieses Feld wird bereits mit %{first} gefüllt, diese Auswahl wird daher ignoriert."
+  email_extract_not_mapped: "(nicht zugeordnet)"
+  email_extract_attribute_subject: "Betreff"
+  email_extract_attribute_from: "Von (Name und Adresse)"
+  email_extract_attribute_from_name: "Name des Absenders"
+  email_extract_attribute_from_address: "Adresse des Absenders"
+  email_extract_attribute_to: "An"
+  email_extract_attribute_cc: "Cc"
+  email_extract_attribute_date: "Sendedatum"
+
   # Fehlermeldungen des Servers
   email_extract_failed: "Die E-Mail konnte nicht gelesen werden."
   email_extract_not_found: "Hochgeladene Datei nicht gefunden."

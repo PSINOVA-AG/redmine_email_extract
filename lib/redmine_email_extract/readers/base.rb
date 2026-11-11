@@ -6,6 +6,8 @@ module RedmineEmailExtract
     # so a request only pays for what it uses (a thumbnail needs only #parts).
     #
     #   subject, from, to, cc   String or nil (for display: "Name <address>", ...)
+    #   from_name               name of the sender only, or nil (also when the mail
+    #                           gives the address again as the name)
     #   from_address            e-mail address of the sender only, lowercased, or nil
     #   date                    Time or nil
     #   text_body               plain text of the mail ('' if none)
@@ -45,6 +47,16 @@ module RedmineEmailExtract
 
       def subject = memoize(:subject) { read_subject }
       def from = memoize(:from) { read_from }
+
+      # Mail programs often repeat the address as the name ("anna@example.org
+      # <anna@example.org>"); that is no name.
+      def from_name
+        memoize(:from_name) do
+          name = clean(read_from_name).presence
+          name unless name&.casecmp?(from_address.to_s)
+        end
+      end
+
       # Lowercased so that it can be compared with the addresses of Redmine users.
       def from_address = memoize(:from_address) { read_from_address.to_s.downcase.presence }
       def to = memoize(:to) { read_to }

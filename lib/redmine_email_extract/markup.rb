@@ -85,10 +85,15 @@ module RedmineEmailExtract
     # Inline image that refers to an attachment of the same container by file name.
     def image(_filename) = raise NotImplementedError
 
+    # A header value as plain text of one line (see LINE_BREAKS), without markup
+    # escapes; also used for the values that fill issue fields (FieldMapping).
+    def self.one_line(text)
+      text.to_s.gsub(BIDI_CONTROLS, '').gsub(LINE_BREAKS, ' ').squeeze(' ').strip
+    end
+
     # A header field value, as text inside a line.
     def value(text)
-      text = text.to_s.gsub(BIDI_CONTROLS, '').gsub(LINE_BREAKS, ' ').squeeze(' ').strip
-      protect(inline(text))
+      protect(inline(self.class.one_line(text)))
     end
 
     # Mail text as wiki text ('' if it has none).

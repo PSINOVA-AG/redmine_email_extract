@@ -27,6 +27,23 @@ module RedmineEmailExtract
         nil
       end
 
+      # The display name of the address that read_from_address takes. A header without
+      # any address is a name only (read_from shows it as it is, and so does this).
+      def read_from_name
+        address = from_addresses.find { |candidate| candidate.address.to_s.include?('@') }
+        return address.display_name.to_s.sub(/\A"(.*)"\z/, '\1') if address
+
+        from = read_from
+        from unless from.to_s.include?('@')
+      end
+
+      # The addresses of the From header ([] for a header the gem cannot parse).
+      def from_addresses
+        Array(mail[:from]&.addrs)
+      rescue StandardError
+        []
+      end
+
       # In UTC: DateTime#to_time keeps the sender's offset, and Redmine leaves such a
       # time unconverted (instead of showing it in the server's zone) for users
       # without a time zone of their own.

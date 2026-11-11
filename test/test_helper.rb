@@ -6,8 +6,8 @@ require File.expand_path('../../../test/test_helper', __dir__)
 module RedmineEmailExtract
   module TestSupport
     # Stand-in for a mail reader (see RedmineEmailExtract::Readers::Base).
-    FakeMail = Struct.new(:subject, :from, :from_address, :to, :cc, :date, :text_body, :html_body, :parts,
-                          keyword_init: true) do
+    FakeMail = Struct.new(:subject, :from, :from_name, :from_address, :to, :cc, :date,
+                          :text_body, :html_body, :parts, keyword_init: true) do
       def part_at(index)
         parts[index]
       end

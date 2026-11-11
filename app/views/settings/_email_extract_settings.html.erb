@@ -1,0 +1,29 @@
+<%# Plugin settings (inside Redmine's "box tabular settings" form): which attribute of
+    an inserted mail fills which issue field, see RedmineEmailExtract::FieldMapping.
+    A stored field that can no longer be used shows as not mapped and is dropped on
+    the next save. %>
+<% mapping = RedmineEmailExtract::FieldMapping.new(settings) %>
+
+<h3><%= l(:email_extract_settings_field_mapping) %></h3>
+<p><em class="info"><%= l(:email_extract_settings_field_mapping_hint) %></em></p>
+
+<% mapping.duplicates.each do |attribute, first| %>
+  <div class="flash warning">
+    <%= l(:email_extract_settings_duplicate,
+          attribute: l(:"email_extract_attribute_#{attribute}"),
+          first: l(:"email_extract_attribute_#{first}")) %>
+  </div>
+<% end %>
+
+<% RedmineEmailExtract::FieldMapping::ATTRIBUTES.each do |attribute| %>
+  <p>
+    <%= label_tag "settings_field_mapping_#{attribute}", l(:"email_extract_attribute_#{attribute}") %>
+    <%= select_tag "settings[field_mapping][#{attribute}]",
+                   options_for_select([[l(:email_extract_not_mapped), '']] + mapping.choices(attribute),
+                                      mapping.target(attribute).to_s),
+                   id: "settings_field_mapping_#{attribute}" %>
+    <% if attribute == 'date' %>
+      <em class="info"><%= l(:email_extract_settings_date_hint) %></em>
+    <% end %>
+  </p>
+<% end %>

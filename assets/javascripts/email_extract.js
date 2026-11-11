@@ -205,7 +205,7 @@
   // (or not the plugin answering) and is not used.
   function isMail(mail) {
     return Boolean(mail) && Array.isArray(mail.messages) && mail.messages.every(Array.isArray) &&
-      Array.isArray(mail.parts);
+      Array.isArray(mail.parts) && Array.isArray(mail.fields);
   }
 
   function isUpload(upload) {
@@ -792,6 +792,17 @@
 
   // --- MailRow -------------------------------------------------------------------
 
+  // Ids of the issue form fields the server names as targets of mail values (see
+  // FieldMapping in the plugin); a custom field is named by its id.
+  const STANDARD_FIELDS = new Map([
+    ['subject', 'issue_subject'], ['start_date', 'issue_start_date'], ['due_date', 'issue_due_date']
+  ]);
+
+  function fieldId(target) {
+    if (Number.isInteger(target) && target > 0) return `issue_custom_field_values_${target}`;
+    return STANDARD_FIELDS.get(target) || null;
+  }
+
   // One uploaded mail in an upload form: its chip and everything a click on it starts.
   class MailRow {
     constructor(row) {
@@ -825,7 +836,7 @@
     resetInsertState() {
       this.mailText = null; // MailText: what of the mail is inserted
       this.insertion = null; // Insertion: the text in the field and where it is
-      this.subjectFilled = null; // subject this script put into the empty subject field
+      this.filledFields = []; // { field, value }: empty issue fields this script filled
       this.uploadRows = []; // rows of the files attached from the mail
       this.picker = null;
       this.statusBar = null;
@@ -836,10 +847,6 @@
     get token() {
       const input = this.row.querySelector(TOKEN_FIELD);
       return input ? input.value : '';
-    }
-
-    get subjectField() {
-      return this.form ? this.form.querySelector('#issue_subject') : null;
     }
 
     // The chip says where the mail goes, and is there only if it can go anywhere (an
@@ -902,7 +909,7 @@
       const insertion = new Insertion(field, mailText.compose()); // throws if the field can't be shown
       this.mailText = mailText;
       this.insertion = insertion;
-      this.fillSubject(mail.subject);
+      this.fillFields(mail.fields);
 
       this.statusBar = new StatusBar({
         totalMessages: mail.messages.length,
@@ -934,13 +941,26 @@
       this.statusBar.restartTimer();
     }
 
-    // Uses the subject of the mail for a new issue that has none yet.
-    fillSubject(subject) {
-      const field = this.subjectField;
-      if (!field || typeof subject !== 'string' || !subject || field.value.trim()) return;
-      field.value = subject;
-      this.subjectFilled = subject;
-      notifyChange(field);
+    // Puts values of the mail (by default its subject) into the issue fields the
+    // plugin settings map them to: only into fields of this form that are still
+    // empty, never over what the user entered. A field that is not in the form (not
+    // enabled for the tracker, read-only, deleted) is left out; the server cannot know
+    // which fields the form has.
+    fillFields(fills) {
+      if (!this.form) return;
+      fills.forEach((fill) => {
+        const id = fill ? fieldId(fill.target) : null;
+        if (!id || typeof fill.value !== 'string' || !fill.value) return;
+        const field = this.form.querySelector(`#${id}`);
+        if (!field || !['INPUT', 'TEXTAREA'].includes(field.tagName) || field.type === 'hidden' ||
+            field.disabled || field.readOnly || field.value.trim()) return;
+        field.value = fill.value;
+        // As the field took it: a date field drops what is no date, a text field
+        // would drop line breaks. Undo compares with this.
+        if (!field.value) return;
+        this.filledFields.push({ field, value: field.value });
+        notifyChange(field);
+      });
     }
 
     // Brings the text field up to date after the mail text has changed.
@@ -1029,11 +1049,14 @@
         showError(t('error_undo'));
         return;
       }
-      const subject = this.subjectField;
-      if (subject && this.subjectFilled && subject.value === this.subjectFilled) {
-        subject.value = '';
-        notifyChange(subject);
-      }
+      // Only fields that still hold what was filled in: other values are the user's.
+      // (A form re-rendered meanwhile, e.g. after a tracker change, has new elements.)
+      this.filledFields.forEach(({ field, value }) => {
+        const current = currentElement(field);
+        if (current.value !== value) return;
+        current.value = '';
+        notifyChange(current);
+      });
       this.uploadRows.forEach(removeUploadRow);
       this.finish();
     }

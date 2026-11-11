@@ -12,6 +12,7 @@
 #                     misread: PlainMarkup (none), TextileMarkup, CommonMarkMarkup
 #   PartList          the files of a mail as offered in the picker (order, pre-selection)
 #   Extraction        header, messages and files of a mail, as sent to the page
+#   FieldMapping      which attribute of a mail fills which issue field (plugin settings)
 #   PartUploader      turns selected files into regular Redmine uploads
 module RedmineEmailExtract
   PLUGIN_ID = 'redmine_email_extract'

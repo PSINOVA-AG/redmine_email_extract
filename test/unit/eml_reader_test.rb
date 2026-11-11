@@ -89,6 +89,31 @@ class EmlReaderTest < ActiveSupport::TestCase
     end
   end
 
+  test 'from_name is the name of the sender only' do
+    read(plain_mail) { |mail| assert_equal 'Example, Anna', mail.from_name }
+
+    {
+      "From: =?UTF-8?Q?M=C3=BCller?= <mueller@example.org>\r\n" => 'Müller',
+      "From: Anna Example <anna@example.org>, Ben <ben@example.org>\r\n" => 'Anna Example',
+      # A header that holds no address is a name (and shown as such in From).
+      "From: Anna Example\r\n" => 'Anna Example'
+    }.each do |header, name|
+      read("#{header}Content-Type: text/plain\r\n\r\nText") { |mail| assert_equal name, mail.from_name, header }
+    end
+  end
+
+  test 'from_name is nil if the mail has only an address' do
+    [
+      "From: anna@example.org\r\n",
+      "From: <anna@example.org>\r\n",
+      # The address again as the name is no name.
+      "From: \"Anna@Example.org\" <anna@example.org>\r\n",
+      ''
+    ].each do |header|
+      read("#{header}Content-Type: text/plain\r\n\r\nText") { |mail| assert_nil mail.from_name, header }
+    end
+  end
+
   test 'the date is given in UTC' do
     read("Date: Thu, 05 Nov 2026 10:31:00 +0100\r\nContent-Type: text/plain\r\n\r\nText") do |mail|
       assert_equal Time.utc(2026, 11, 5, 9, 31), mail.date
