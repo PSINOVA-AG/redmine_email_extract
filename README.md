@@ -33,7 +33,10 @@ When an e-mail file is uploaded in an upload form, an **"In Notiz einfügen" /
 - offers the **images and files of the mail** in a picker. Chosen files become normal
   attachments of the form; images are also shown in the inserted text, at the place
   they have in the mail.
-  Small images (logos) and images of messages that are not inserted are not pre-selected,
+  Small images (logos) and images of messages that are not inserted are not pre-selected.
+  If the form is saved while the picker is still open, the chosen files are attached
+  first (as with the button) and the form is then saved; if attaching fails, the
+  form is not saved and the picker stays open ("Skip" saves without the files),
 - can be undone for a short time (text, filled fields and attached files).
 
 Files that are already attached to an issue do not get the chip.
@@ -256,6 +259,11 @@ RTF in the `ruby-msg` gem (`Mapi::RTF.rtf2html`), which is under the MIT licence
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Changelog
+
+### 1.4.0
+
+- Saving the form while the picker is open attaches the chosen files first, then
+  saves (with the same submit button, e.g. "Create and continue").
 
 ### 1.3.0
 

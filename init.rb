@@ -5,7 +5,7 @@ Redmine::Plugin.register :redmine_email_extract do
   author 'PSINOVA AG'
   description 'Inserts the text of uploaded .eml / .msg files into the issue description or notes ' \
               'and attaches the images and files they contain.'
-  version '1.3.0'
+  version '1.4.0'
   url 'https://github.com/PSINOVA-AG/redmine_email_extract'
   author_url 'https://www.psinova.com'
   # 6.1 is the first version with createSVGIcon and the "quote-filled" icon that

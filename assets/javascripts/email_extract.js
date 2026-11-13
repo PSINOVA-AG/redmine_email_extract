@@ -522,16 +522,19 @@
   // Panel that lists the images and files of a mail with a checkbox each.
   //   shownMessages       number of thread messages that are inserted (for the pre-selection)
   //   onAttach(indexes)   called with the chosen files; returns (a promise of) the number attached
+  //                       (by the "attach" button, and by saving the form while the panel is open)
   //   onClose(hadFocus)   called when the panel was closed; hadFocus: the keyboard focus was in it
   class FilePicker {
     constructor(parts, { shownMessages, onAttach, onClose }) {
       this.onClose = onClose;
+      this.onAttach = onAttach;
+      this.pending = null; // promise of the running attach request
       this.shownMessages = shownMessages;
       // manual: the user ticked or unticked it, so the pre-selection leaves it alone
       this.choices = parts.map((part) => ({ part, checkbox: null, manual: false }));
 
       this.attachButton = el('button', 'email-extract-button email-extract-attach', null, { type: 'button' });
-      this.attachButton.addEventListener('click', () => this.attach(onAttach));
+      this.attachButton.addEventListener('click', () => this.attach());
       const skip = el('a', 'email-extract-skip', t('skip'), { href: '#' });
       skip.addEventListener('click', (event) => {
         event.preventDefault();
@@ -623,11 +626,27 @@
       this.attachButton.textContent = t('attach_selected', { count: this.selectedIndexes().length });
     }
 
-    async attach(onAttach) {
+    // Attaches the chosen files; a second call while the request runs gets the same
+    // promise. Resolves to the number attached (0 after an error, which is shown).
+    attach() {
+      if (!this.pending) {
+        this.pending = this.runAttach().finally(() => {
+          this.pending = null;
+        });
+      }
+      return this.pending;
+    }
+
+    // True if saving the form now would lose files the user chose here.
+    get hasUnattached() {
+      return this.isOpen && (Boolean(this.pending) || this.selectedIndexes().length > 0);
+    }
+
+    async runAttach() {
       const indexes = this.selectedIndexes();
       if (!indexes.length) {
         showError(t('error_none_selected'));
-        return;
+        return 0;
       }
       // The disabled button loses the focus; it is given back below.
       const hadFocus = this.element.contains(document.activeElement);
@@ -635,18 +654,19 @@
       this.attachButton.textContent = t('attaching');
       let attached = 0;
       try {
-        attached = await onAttach(indexes);
+        attached = await this.onAttach(indexes);
       } catch (error) {
         report(error);
       }
       // Stays open if nothing was attached, so that other files can be chosen.
       if (attached > 0) {
         this.close(hadFocus);
-        return;
+        return attached;
       }
       this.attachButton.disabled = false;
       this.updateAttachButton();
       if (hadFocus && this.isOpen && focusIsLost()) this.attachButton.focus();
+      return 0;
     }
 
     close(hadFocus = false) {
@@ -1095,6 +1115,49 @@
     liveRows.add(mailRow);
   }
 
+  // Saving a form while a picker in it still has chosen files attaches them first, as
+  // the "attach" button would, and then saves the form with the same submit button
+  // (e.g. "Create and continue"). The first submit event is stopped before any other
+  // script sees it (rails-ujs would disable the buttons, Redmine would drop its
+  // warning about unsaved changes); the second one runs through all of them. If
+  // attaching fails (the error is shown), the form is not saved and the picker stays
+  // open: the user can try again, change the choice or "Skip".
+  const attachingForms = new WeakSet();
+  function attachBeforeSubmit(event) {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    if (attachingForms.has(form)) { // saved again while the files are being attached
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
+    const pickers = [...liveRows]
+      .filter((mailRow) => mailRow.form === form && mailRow.row.isConnected && mailRow.picker &&
+        mailRow.picker.hasUnattached)
+      .map((mailRow) => mailRow.picker);
+    if (!pickers.length) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const submitter = event.submitter && event.submitter.form === form ? event.submitter : null;
+    attachingForms.add(form);
+    (async () => {
+      // One after another: each one takes room in the upload form.
+      for (const picker of pickers) {
+        await picker.attach();
+        if (picker.hasUnattached) return false;
+      }
+      return true;
+    })().then((attachedAll) => {
+      attachingForms.delete(form);
+      if (!attachedAll || !form.isConnected) return;
+      if (submitter && submitter.isConnected && submitter.form === form) form.requestSubmit(submitter);
+      else form.requestSubmit();
+    }, (error) => {
+      attachingForms.delete(form);
+      report(error);
+    });
+  }
+
   function setUpRowsIn(node) {
     if (node.nodeType !== Node.ELEMENT_NODE) return;
     if (node.matches(UPLOAD_ROW)) setUpRow(node);
@@ -1118,6 +1181,7 @@
 
   function start() {
     trackTextFocus();
+    window.addEventListener('submit', attachBeforeSubmit, true); // before every other handler
     setUpRowsIn(document.body);
     // Rows appear when files are chosen, and whole forms are loaded later (e.g. inline
     // editing). Text fields come and go with re-rendered forms.
